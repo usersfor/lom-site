@@ -435,19 +435,17 @@ export function initPath01Scene() {
     state.scene.add(state.textRing);
 
     // 镜子 GLB:public/ 目录资源,直接用相对路径
-    const url = './moxin/mirror.glb';
-    console.log('[Scene] GLB 请求 URL:', url);
-    console.time('[Scene] GLB total');
-    const loader = new GLTFLoader();
-    loader.setMeshoptDecoder(MeshoptDecoder);
-    loader.load(
-      url,
-      (gltf) => {
-        try {
-          console.timeEnd('[Scene] GLB total');
-          console.log('[Scene] GLB 加载成功,开始处理...');
-          console.time('[Scene] GLB 处理');
-          state.model = gltf.scene;
+    // GLB 加载:主 URL 失败时自动 fallback 到 jsDelivr CDN(解决 Cloudflare 大文件 reset 问题)
+    const GLB_URLS = [
+      './moxin/mirror.glb',                                    // 主:同域相对路径
+      'https://cdn.jsdelivr.net/gh/usersfor/lom-site@master/public/moxin/mirror.glb',  // fallback:jsDelivr CDN
+    ];
+    const runAfterLoad = (gltf) => {
+      try {
+        console.timeEnd('[Scene] GLB total');
+        console.log('[Scene] GLB 加载成功,开始处理...');
+        console.time('[Scene] GLB 处理');
+        state.model = gltf.scene;
         const box = new THREE.Box3().setFromObject(state.model);
         const size = box.getSize(new THREE.Vector3());
         const targetSize = 1.8;
@@ -707,15 +705,28 @@ export function initPath01Scene() {
           console.error('[Scene] GLB 处理异常:', e);
           console.trace(e);
         }
-      },
-      undefined,
-      (err) => {
-        console.error('[Scene] GLB 加载失败:', err);
-        console.warn('[Scene] 尝试不带 meshopt decoder 解析...');
-        // fallback: 即使 GLB 加载失败也启动空场景,至少 canvas 不透明
-        console.warn('[Scene] GLB 无法加载,镜子模型不会显示');
-      }
-    );
+      };
+      const tryLoadGLB = (urlIndex) => {
+        if (urlIndex >= GLB_URLS.length) {
+          console.warn('[Scene] 所有 GLB URL 都加载失败,镜子模型不会显示');
+          return;
+        }
+        const url = GLB_URLS[urlIndex];
+        console.log(`[Scene] GLB 尝试加载(${urlIndex + 1}/${GLB_URLS.length}):`, url);
+        if (urlIndex === 0) console.time('[Scene] GLB total');  // 只在首次计时
+        const loader = new GLTFLoader();
+        loader.setMeshoptDecoder(MeshoptDecoder);
+        loader.load(
+          url,
+          runAfterLoad,
+          undefined,
+          (err) => {
+            console.warn(`[Scene] GLB URL ${url} 加载失败,尝试下一个...`, err);
+            tryLoadGLB(urlIndex + 1);
+          }
+        );
+      };
+      tryLoadGLB(0);
 
     // 鼠标:在 window 上监听 —— .hero__mirror 是 pointer-events:none 的全屏层,
     // 自身收不到事件,但跟随只需要全局鼠标坐标

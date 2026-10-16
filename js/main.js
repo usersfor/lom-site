@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿/* =========================================================
+﻿﻿﻿﻿﻿﻿﻿﻿/* =========================================================
    诡秘之主 · Lord of the Mysteries
    Haven Constructions 质感复刻（修复版）
 
@@ -14,6 +14,9 @@
    - section-tag → letter-spacing 从 0.5em 收缩到 0.22em
    ========================================================= */
 
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger.js';
+import Lenis from 'lenis';
 import { initPath01Scene } from './scene-path01.js';
 
 (function () {
@@ -53,7 +56,6 @@ import { initPath01Scene } from './scene-path01.js';
 
   /* ---------- 2. LENIS ---------- */
   function initLenis() {
-    if (typeof Lenis === 'undefined') return null;
     const lenis = new Lenis({
       duration: 1.35,
       easing: (t) => 1 - Math.pow(1 - t, 3),
@@ -783,7 +785,7 @@ import { initPath01Scene } from './scene-path01.js';
     // 二维码素材:public/image/qq-qr.jpg、public/image/wechat-qr.jpg
     const QR_PRESETS = {
       qq: {
-        src: '/image/qq.png',
+        src: './image/qq.png',
         kicker: '扫码加群',
         title: 'QQ 群 · 白银城持镜',
         hint: '打开手机 QQ「扫一扫」，或直接搜索群号',
@@ -791,7 +793,7 @@ import { initPath01Scene } from './scene-path01.js';
         showCopy: true,
       },
       wechat: {
-        src: '/image/wx.png',
+        src: './image/wx.png',
         kicker: '扫码添加',
         title: '官方微信 · 接待号',
         hint: '打开微信「扫一扫」添加，24 小时内通过',
